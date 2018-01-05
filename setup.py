@@ -31,8 +31,6 @@ setup(
     keywords='python qualtrics api survey_administration',
     packages=['py_qualtrics_api'],
     install_requires=['requests', 'PyYAML', 'pandas'],
-    package_data={
-        'config_sample': ['config_sample.yml'],
-        'tests': ['tests.ipynb']
-    },
+    data_files=[('config', ['config_sample.yml']),
+                ('tests', ['tests.ipynb', 'test_mailing_list.csv'])]
 )
