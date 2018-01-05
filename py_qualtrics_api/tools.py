@@ -215,7 +215,7 @@ class QualtricsAPI:
           print('Successfully added {} to mailing list'.format(row['email']))
       else:
         if verbose == True:
-          print('Failed to add {} to mailing list\n\n\n'.format(row['email']))
+          print('Failed to add {} to mailing list\n'.format(row['email']))
     return()
 
   def get_links_for_mailing_list(self, survey_id: str, mailing_list_id: str, days_to_expiry=130,
@@ -257,7 +257,66 @@ class QualtricsAPI:
     
     links_df = pd.DataFrame(response.json()['result']['elements'])
     return(links_df)
+
+  def create_library_message(self, description, messages: dict, category='invite',
+                             owner=None, verbose=True):
+    """Create a message to be stored in owner's library. Parameter 'messages' is
+    a mapping from language code (e.g. 'en') to a message string. Category is one
+    of: invite, inactiveSurvey, reminder, thankYou, endOfSurvey, general, validation, 
+    lookAndFeel, emailSubject, or smsInvite"""
+    if owner == None:
+      lib_id = self.config.default_library_owner
+    else:
+      lib_id = owner
+    p = {}
+    p['description'] = description
+    p['messages'] = messages
+    p['category'] = category
+    headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
+    base_url = """https://{}.qualtrics.com/API/v3/libraries/{}/messages""".format(self.config.data_center,
+                                                                                  lib_id)
+    (success, response) = self.make_post_request(base_url, p, headers, verbose)
+    if success == True:
+      msg_id = response.json()["result"]["id"]
+      if verbose:
+        print('\nNew message id is: {}'.format(msg_id))
+      return(msg_id)
+    else:
+      return()
+
+  def send_survey(self, 
+                  survey_id,
+                  message_id,
+                  mailing_list_id,
+                  from_email,
+                  from_name,
+                  subject,
+                  message_library_id=None,
+                  reply_to_email=None,
+                  link_type='Individual',
+                  send_time=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  expiration_time=(datetime.utcnow() + timedelta(days=130)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  verbose=True):
+    headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
+    base_url = """https://{}.qualtrics.com/API/v3/distributions""".format(self.config.data_center)
+
+    if reply_to_email == None:
+      reply_to_email = from_email
+    if message_library_id == None:
+      message_library_id = self.config.default_library_owner
     
-      
-    
+    sl = {'surveyId': survey_id, 'expirationDate': expiration_time, 'type': link_type}
+    h = {'fromEmail': from_email, 'fromName': from_name, 'replyToEmail': reply_to_email, 'subject': subject}
+    m = {'libraryId': message_library_id, 'messageId': message_id}
+    r = {'mailingListId': mailing_list_id}
+    p = {'surveyLink': sl, 'header': h, 'message': m, 'recipients': r, 'sendDate': send_time}
+
+    (success, response) = self.make_post_request(base_url, p, headers, verbose)
+    if success == True:
+      dist_id = response.json()["result"]["id"]
+      if verbose:
+        print('\nNew distribution id is: {}'.format(dist_id))
+      return(dist_id)
+    else:
+      return()
     

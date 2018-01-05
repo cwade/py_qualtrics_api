@@ -17,6 +17,10 @@ This package includes methods for using the Qualtrics API to:
 
 * Generate unique survey links for members of a mailing list
 
+* Create a message for the message library
+
+* Distribute a survey to a mailing list using a message from the message library
+
 ----
 
 Installation
