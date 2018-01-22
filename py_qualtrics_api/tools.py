@@ -346,7 +346,7 @@ class QualtricsAPI:
 
     (success, response) = self.make_post_request(base_url, p, headers, verbose)
     if success == True:
-      dist_id = response.json()["result"]["distribution_id"]
+      dist_id = response.json()["result"]["distributionId"]
       if verbose:
         print('\nNew distribution id is: {}'.format(dist_id))
       return(dist_id)
