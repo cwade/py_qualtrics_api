@@ -319,4 +319,37 @@ class QualtricsAPI:
       return(dist_id)
     else:
       return()
+
+  def send_reminder(self,
+                    parent_distribution_id,
+                    message_id,
+                    from_email,
+                    from_name,
+                    subject,
+                    message_library_id=None,
+                    reply_to_email=None,
+                    send_time=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    verbose=True):
+    headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
+    base_url = """https://{}.qualtrics.com/API/v3/distributions/{}/reminders""".format(
+      self.config.data_center,
+      parent_distribution_id)
+
+    if reply_to_email == None:
+      reply_to_email = from_email
+    if message_library_id == None:
+      message_library_id = self.config.default_library_owner
+
+    h = {'fromEmail': from_email, 'fromName': from_name, 'replyToEmail': reply_to_email, 'subject': subject}
+    m = {'libraryId': message_library_id, 'messageId': message_id}
+    p = {'header': h, 'message': m, 'sendDate': send_time}
+
+    (success, response) = self.make_post_request(base_url, p, headers, verbose)
+    if success == True:
+      dist_id = response.json()["result"]["distribution_id"]
+      if verbose:
+        print('\nNew distribution id is: {}'.format(dist_id))
+      return(dist_id)
+    else:
+      return()
     
