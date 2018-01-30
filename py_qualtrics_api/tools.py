@@ -352,4 +352,57 @@ class QualtricsAPI:
       return(dist_id)
     else:
       return()
+
+  def create_user(username, 
+                  password, 
+                  first_name, 
+                  last_name,
+                  user_type,
+                  email,
+                  division_id=None,
+                  account_expiration_date=None,
+                  language='en',
+                  verbose=True):
+    base_url = """https://{}.qualtrics.com/API/v3/users""".format(
+      self.config.data_center,
+      parent_distribution_id)
+    headers = {
+    "x-api-token": self.config.api_token,
+    "Content-Type": "application/json"
+    }
+    data = {"username": username,
+            "password": password,
+            "firstName": first_name,
+            "lastName": last_name,
+            "userType": user_type,
+            "email": email,
+            "language": language}
+
+    if division_id != None:
+      data['divisionId'] = division_id
+    if account_expiration_date != None:
+      data['accountExpirationDate'] = account_expiration_date
+
+    (success, response) = self.make_post_request(base_url, data, headers, verbose)
+    if success == True:
+      user_id = response.json()["result"]["id"]
+      if verbose:
+        print('\nNew user id is: {}'.format(user_id))
+      return(user_id)
+    else:
+      return()
+
+  def list_users(verbose=True):
+    base_url = "https://{0}.qualtrics.com/API/v3/users".format(self.config.data_center)
+    headers = {"x-api-token": self.config.api_token}
+    (success, response) = self.make_get_request(base_url, headers, verbose)
+
+    if success == True:
+      if verbose:
+        print('Users retrieved')
+      return(response)
+    else:
+      if verbose:
+        print(response.json())
+      return()
     
