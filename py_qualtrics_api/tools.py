@@ -331,10 +331,8 @@ class QualtricsAPI:
                     send_time=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                     verbose=True):
     headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
-    base_url = """https://{}.qualtrics.com/API/v3/distributions/{}/reminders""".format(
-      self.config.data_center,
-      parent_distribution_id)
-
+    base_url = """https://{}.qualtrics.com/API/v3/distributions/{}/reminders""".format(self.config.data_center,
+                                                                                       parent_distribution_id)
     if reply_to_email == None:
       reply_to_email = from_email
     if message_library_id == None:
@@ -353,7 +351,8 @@ class QualtricsAPI:
     else:
       return()
 
-  def create_user(username, 
+  def create_user(self,
+                  username, 
                   password, 
                   first_name, 
                   last_name,
@@ -364,8 +363,7 @@ class QualtricsAPI:
                   language='en',
                   verbose=True):
     base_url = """https://{}.qualtrics.com/API/v3/users""".format(
-      self.config.data_center,
-      parent_distribution_id)
+      self.config.data_center)
     headers = {
     "x-api-token": self.config.api_token,
     "Content-Type": "application/json"
@@ -392,7 +390,7 @@ class QualtricsAPI:
     else:
       return()
 
-  def list_users(verbose=True):
+  def list_users(self, verbose=True):
     base_url = "https://{0}.qualtrics.com/API/v3/users".format(self.config.data_center)
     headers = {"x-api-token": self.config.api_token}
     (success, response) = self.make_get_request(base_url, headers, verbose)
