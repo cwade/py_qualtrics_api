@@ -393,12 +393,20 @@ class QualtricsAPI:
   def list_users(self, verbose=True):
     base_url = "https://{0}.qualtrics.com/API/v3/users".format(self.config.data_center)
     headers = {"x-api-token": self.config.api_token}
-    (success, response) = self.make_get_request(base_url, headers, verbose)
+    all_success = True
+    users = []
+    while base_url is not None:
+      (success, response) = self.make_get_request(base_url, headers, verbose)
+      base_url = response.json()['result']['nextPage']
+      users += response.json()['result']['elements']
+      if success == False:
+        all_success = False
 
-    if success == True:
+
+    if all_success == True:
       if verbose:
         print('Users retrieved')
-      return(response)
+      return(users)
     else:
       if verbose:
         print(response.json())
