@@ -4,6 +4,8 @@ import pandas as pd
 import requests
 from getpass import getpass
 from datetime import datetime, timedelta
+import zipfile
+import io
 
 class QualtricsAPI:
 
@@ -488,5 +490,93 @@ class QualtricsAPI:
     
     return(success)
 
+  def create_response_export(self, 
+                             survey_id,
+                             format,
+                             start_date=None,
+                             end_date=None,
+                             limit=None,
+                             use_labels=None,
+                             seen_unanswered_recode=None,
+                             multiselect_seen_unanswered_recode=None,
+                             include_display_order=None,
+                             format_decimal_as_comma=None,
+                             time_zone=None,
+                             newline_replacement=None,
+                             question_ids=None,
+                             embedded_data_ids=None,
+                             survey_metadata_ids=None,
+                             compress=None,
+                             verbose=True):
+    base_url = 'https://{}.qualtrics.com/API/v3/surveys/{}/export-responses'.format(self.config.data_center,
+                                                                                    survey_id)
+    headers = {"x-api-token": self.config.api_token}
+    data = {"format": format}
+    for var, varname in [
+      [start_date, 'startDate'],
+      [end_date, 'endDate'],
+      [limit, 'limit'],
+      [use_labels, 'useLabels'],
+      [seen_unanswered_recode, 'seenUnansweredRecode'],
+      [multiselect_seen_unanswered_recode, 'multiselectSeenUnansweredRecode'],
+      [include_display_order, 'includeDisplayOrder'],
+      [format_decimal_as_comma, 'formatDecimalAsComma'],
+      [time_zone, 'timeZone'],
+      [newline_replacement, 'newlineReplacement'],
+      [question_ids, 'questionIds'],
+      [embedded_data_ids, 'embeddedDataIds'],
+      [survey_metadata_ids, 'surveyMetadataIds'],
+      [compress, 'compress']]:
+      if var != None:
+        data[varname] = var
 
+    (success, response) = self.make_post_request(base_url, data, headers, verbose)
+    if success == True:
+      progress_id = response.json()["result"]["progressId"]
+      if verbose:
+        print('\nProgress id is: {}'.format(progress_id))
+      return(progress_id)
+    else:
+      if verbose:
+        print('Response export not created')
+      return()
+
+  def get_response_export_progress(self, survey_id, export_progress_id, verbose=True):
+    base_url = 'https://{}.qualtrics.com/API/v3/surveys/{}/export-responses/{}'.format(self.config.data_center,
+                                                                                       survey_id,
+                                                                                       export_progress_id)
+    headers = {"x-api-token": self.config.api_token}
+    (success, response) = self.make_get_request(base_url, headers, verbose)
+    if success == True:
+      percent_complete = response.json()["result"]["percentComplete"]
+      status = response.json()["result"]["status"]
+      if status == 'complete':
+        file_id = response.json()["result"]["fileId"]
+      else:
+        file_id = None
+      if verbose:
+        print('\nRetrieved export progress: {}% complete, status {}, file id {}'.format(percent_complete, status, file_id))
+      return((status, file_id))
+    else:
+      if verbose:
+        print('Failed to retrieve export progress')
+      return()  
+
+  def get_response_export_file_as_dataframe(self, survey_id, file_id, verbose=True):
+    base_url = 'https://{}.qualtrics.com/API/v3/surveys/{}/export-responses/{}/file'.format(self.config.data_center,
+                                                                                       survey_id,
+                                                                                       file_id)
+    headers = {"x-api-token": self.config.api_token}
+    download = requests.request("GET", base_url, headers=headers, stream=True)
+
+    try:
+      zfobj = zipfile.ZipFile(io.BytesIO(download.content))
+      for name in zfobj.namelist():
+        uncompressed = zfobj.read(name)
+        df = pd.read_csv(io.StringIO(uncompressed.decode('utf-8')), skiprows=[1, 2])
+      return(df)
+    except Exception as e:
+      if verbose:
+        print(e)
+      return()
     
