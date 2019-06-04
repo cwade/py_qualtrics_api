@@ -14,7 +14,7 @@ class QualtricsAPI:
 
     def __init__(self, config_file: str):
       with open(config_file, 'r') as ymlfile:
-          cfg = yaml.load(ymlfile)
+          cfg = yaml.load(ymlfile, yaml.FullLoader)
       if 'api_token' in cfg:
         self.api_token = cfg['api_token']
       else:
@@ -62,9 +62,12 @@ class QualtricsAPI:
     response = requests.get(base_url, headers=headers)
     if verbose == True:
       print("Sending request:")
-      print(response.request.body)
-      print(response.request.headers)
+      print("URL: {}".format(base_url))
+      print("Body: {}".format(response.request.body))
+      print("Headers: {}".format(response.request.headers))
     
+    if verbose == True:
+      print("Response : {}".format(response))
     if response.json()['meta']['httpStatus'] == '200 - OK':
       if verbose == True:
         print("\n\nSuccess:")
@@ -223,9 +226,17 @@ class QualtricsAPI:
     url = 'https://{0}.qualtrics.com/API/v3/distributions/{1}/links?surveyId={2}'.format(self.config.data_center, 
                                                                                          distribution_id,
                                                                                          survey_id)
-    (success, response) = self.make_get_request(url, headers, verbose)
     
-    if success == True:
+    all_success = True
+    links = []
+    while url is not None:
+      (success, response) = self.make_get_request(url, headers, verbose)
+      url = response.json()['result']['nextPage']
+      links += response.json()['result']['elements']
+      if success == False:
+        all_success = False
+
+    if all_success == True:
       if verbose:
         print('Links retrieved')
     else:
@@ -233,7 +244,7 @@ class QualtricsAPI:
         print(response.json())
       return(None)
     
-    links_df = pd.DataFrame(response.json()['result']['elements'])
+    links_df = pd.DataFrame(links)
     return(links_df)
 
   def get_links_for_mailing_list(self, survey_id: str, mailing_list_id: str, days_to_expiry=130,
@@ -414,5 +425,68 @@ class QualtricsAPI:
       if verbose:
         print(response.json())
       return()
+
+  def get_user(self, user_id, verbose=True):
+    base_url = "https://{0}.qualtrics.com/API/v3/users/{1}".format(self.config.data_center,
+                                                                  user_id)
+    headers = {"x-api-token": self.config.api_token}
+    (success, response) = self.make_get_request(base_url, headers, verbose)
+    if success == True:
+      user = response.json()["result"]
+      if verbose:
+        print('\nRetrieved user: {}'.format(user))
+      return(user)
+    else:
+      if verbose:
+        print(response.json())
+      return()   
+
+  def update_user(self,
+                  user_id,
+                  username=None,  
+                  first_name=None, 
+                  last_name=None,
+                  user_type=None,
+                  division_id=None,
+                  status=None,
+                  language='en',
+                  time_zone=None,
+                  permissions=None,
+                  account_expiration_date=None,
+                  verbose=True):
+    base_url = "https://{0}.qualtrics.com/API/v3/users/{1}".format(self.config.data_center,
+                                                                  user_id)
+    headers = {"x-api-token": self.config.api_token}
+    data = {}
+    if username != None:
+      data['username'] = username
+    if first_name != None:
+      data['firstName'] = first_name
+    if last_name != None:
+      data['lastName'] = last_name   
+    if user_type != None:
+      data['userType'] = user_type
+    if division_id != None:
+      data['divisionId'] = division_id
+    if status != None:
+      data['status'] = status
+    if language != None:
+      data['language'] = language
+    if time_zone != None:
+      data['timeZone'] = time_zone
+    if permissions != None:
+      data['permissions'] = permissions
+    if account_expiration_date != None:
+      data['accountExpirationDate'] = account_expiration_date
+    success = self.make_put_request(base_url, data, headers, verbose)
+  
+    if verbose == True:
+      if success == True:
+        print('Survey successfully updated')
+      else:
+        print('User not successfully updated')
+    
+    return(success)
+
 
     
