@@ -218,6 +218,24 @@ class QualtricsAPI:
           print('Failed to add {} to mailing list\n'.format(row['email']))
     return()
 
+  def list_links_for_distribution(self, distribution_id, survey_id, verbose=True):
+    headers = {"X-API-TOKEN": self.config.api_token}
+    url = 'https://{0}.qualtrics.com/API/v3/distributions/{1}/links?surveyId={2}'.format(self.config.data_center, 
+                                                                                         distribution_id,
+                                                                                         survey_id)
+    (success, response) = self.make_get_request(url, headers, verbose)
+    
+    if success == True:
+      if verbose:
+        print('Links retrieved')
+    else:
+      if verbose:
+        print(response.json())
+      return(None)
+    
+    links_df = pd.DataFrame(response.json()['result']['elements'])
+    return(links_df)
+
   def get_links_for_mailing_list(self, survey_id: str, mailing_list_id: str, days_to_expiry=130,
                                  description="Survey distribution", link_type='Individual',
                                  verbose=True):
@@ -241,22 +259,7 @@ class QualtricsAPI:
     else:
       return()
 
-    headers = {"X-API-TOKEN": self.config.api_token}
-    url = 'https://{0}.qualtrics.com/API/v3/distributions/{1}/links?surveyId={2}'.format(self.config.data_center, 
-                                                                                         distribution_id,
-                                                                                         survey_id)
-    (success, response) = self.make_get_request(url, headers, verbose)
-    
-    if success == True:
-      if verbose:
-        print('Links retrieved')
-    else:
-      if verbose:
-        print(response.json())
-      return(None)
-    
-    links_df = pd.DataFrame(response.json()['result']['elements'])
-    return(links_df)
+    return(list_links_for_distribution(distribution_id, survey_id, vebose))
 
   def create_library_message(self, description, messages: dict, category='invite',
                              owner=None, verbose=True):
@@ -411,4 +414,5 @@ class QualtricsAPI:
       if verbose:
         print(response.json())
       return()
+
     
