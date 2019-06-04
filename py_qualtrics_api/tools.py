@@ -9,14 +9,18 @@ import io
 
 class QualtricsAPI:
 
-  def __init__(self, config_file: str):
-    self.config = self.APIConfig(config_file)
+  def __init__(self, config_file_or_dict):
+    self.config = self.APIConfig(config_file_or_dict)
 
   class APIConfig:
 
-    def __init__(self, config_file: str):
-      with open(config_file, 'r') as ymlfile:
-          cfg = yaml.load(ymlfile, yaml.FullLoader)
+    def __init__(self, config_file_or_dict):
+      if type(config_file_or_dict) == dict:
+        cfg = config_file_or_dict
+      else:
+        with open(config_file_or_dict, 'r') as ymlfile:
+            cfg = yaml.load(ymlfile, yaml.FullLoader)
+      print(cfg)
       if 'api_token' in cfg:
         self.api_token = cfg['api_token']
       else:
