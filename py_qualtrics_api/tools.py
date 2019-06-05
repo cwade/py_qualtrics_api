@@ -276,7 +276,7 @@ class QualtricsAPI:
     else:
       return()
 
-    return(list_links_for_distribution(distribution_id, survey_id, vebose))
+    return(self.list_links_for_distribution(distribution_id, survey_id, verbose))
 
   def create_library_message(self, description, messages: dict, category='invite',
                              owner=None, verbose=True):
