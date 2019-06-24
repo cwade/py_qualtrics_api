@@ -10,7 +10,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='py_qualtrics_api',
-    version='0.2.6',
+    version='0.2.7',
     description='Library for facilitating survey administration with Qualtrics. Requires Qualtrics API.',
     long_description=long_description,
     url='https://github.com/cwade/py_qualtrics_api',
@@ -31,6 +31,5 @@ setup(
     keywords='python qualtrics api survey_administration',
     packages=['py_qualtrics_api'],
     install_requires=['requests', 'PyYAML', 'pandas'],
-    data_files=[('config', ['config_sample.yml']),
-                ('tests', ['tests.ipynb', 'test_mailing_list.csv'])]
+    data_files=[('config', ['config_sample.yml'])]
 )
