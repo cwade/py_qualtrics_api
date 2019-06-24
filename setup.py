@@ -10,7 +10,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='py_qualtrics_api',
-    version='0.2.3',
+    version='0.2.4',
     description='Library for facilitating survey administration with Qualtrics. Requires Qualtrics API.',
     long_description=long_description,
     url='https://github.com/cwade/py_qualtrics_api',

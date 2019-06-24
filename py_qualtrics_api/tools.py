@@ -30,7 +30,7 @@ class QualtricsAPI:
       self.default_survey_owner = cfg['default_survey_owner']
       self.default_library_owner = cfg['default_library_owner']
 
-  def make_post_request(self, base_url: str, payload: dict, headers: dict, verbose=True):
+  def make_post_request(self, base_url: str, payload: dict, headers: dict, verbose=False):
     response = requests.post(base_url, json=payload, headers=headers)
     if verbose == True:
       print("Sending request:")
@@ -48,7 +48,7 @@ class QualtricsAPI:
         print(response.json())
       return((True, response))
 
-  def make_put_request(self, base_url: str, payload: dict, headers: dict, verbose=True):
+  def make_put_request(self, base_url: str, payload: dict, headers: dict, verbose=False):
     response = requests.put(base_url, json=payload, headers=headers)
     if verbose == True:
       print("Sending request:")
@@ -63,7 +63,7 @@ class QualtricsAPI:
         print(response.json())
       return(False)
 
-  def make_get_request(self, base_url: str, headers: dict, verbose=True):
+  def make_get_request(self, base_url: str, headers: dict, verbose=False):
 
     response = requests.get(base_url, headers=headers)
     if verbose == True:
@@ -84,7 +84,7 @@ class QualtricsAPI:
         print(response.json())
       return((False, response))
 
-  def make_delete_request(self, base_url: str, headers: dict, verbose=True):
+  def make_delete_request(self, base_url: str, headers: dict, verbose=False):
     response = requests.delete(base_url, headers=headers)
     if verbose == True:
       print("Sending request:")
@@ -98,7 +98,22 @@ class QualtricsAPI:
         print(response.json())
       return(False)
 
-  def copy_survey(self, survey_id: str, new_name: str, owner=None, verbose=True):
+  def get_survey(self, survey_id, verbose=False):
+    base_url = "https://{0}.qualtrics.com/API/v3/surveys/{1}".format(self.config.data_center,
+                                                                     survey_id)
+    headers = {"x-api-token": self.config.api_token}
+    (success, response) = self.make_get_request(base_url, headers, verbose)
+    if success == True:
+      survey = response.json()["result"]
+      if verbose:
+        print('\nRetrieved survey: {}'.format(survey))
+      return(survey)
+    else:
+      if verbose:
+        print(response.json())
+      return()  
+
+  def copy_survey(self, survey_id: str, new_name: str, owner=None, verbose=False):
     if owner == None:
       owner = self.config.default_survey_owner
     base_url = "https://{0}.qualtrics.com/API/v3/surveys".format(self.config.data_center)
@@ -117,7 +132,7 @@ class QualtricsAPI:
     else:
       return()
 
-  def delete_survey(self, survey_id: str, verbose=True):
+  def delete_survey(self, survey_id: str, verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/surveys/{1}".format(self.config.data_center, survey_id)
     headers = {"X-API-TOKEN": self.config.api_token}
     success = self.make_delete_request(base_url, headers, verbose)
@@ -128,7 +143,7 @@ class QualtricsAPI:
   def activate_survey(self, survey_id: str, 
                       start_date=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                       end_date=(datetime.utcnow() + timedelta(days=130)).strftime("%Y-%m-%dT%H:%M:%SZ"), 
-                      verbose=True):
+                      verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/surveys/{1}".format(self.config.data_center, survey_id)
     headers = {"CONTENT-TYPE": "application/json",
                "X-API-TOKEN": self.config.api_token}
@@ -142,7 +157,7 @@ class QualtricsAPI:
     return(success)
 
   def create_mailing_list(self, list_name, records_to_add=pd.DataFrame(), list_category=None, 
-                          owner=None, verbose=True):
+                          owner=None, verbose=False):
     payload = {"name": list_name}
     if owner == None:
       payload["libraryId"] = self.config.default_library_owner
@@ -167,7 +182,7 @@ class QualtricsAPI:
     else:
       return()
 
-  def delete_mailing_list(self, list_id, verbose=True):
+  def delete_mailing_list(self, list_id, verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/mailinglists/{1}".format(self.config.data_center, list_id)
     headers = {"X-API-TOKEN": self.config.api_token}
     success = self.make_delete_request(base_url, headers, verbose)
@@ -175,7 +190,7 @@ class QualtricsAPI:
       print('Mailing list successfully deleted')
     return(success)    
 
-  def add_records_to_mailing_list(self, mailing_list_id: str, records_to_add: pd.DataFrame, verbose=True):
+  def add_records_to_mailing_list(self, mailing_list_id: str, records_to_add: pd.DataFrame, verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/mailinglists/{1}/contacts".format(
                  self.config.data_center, mailing_list_id)
     headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
@@ -227,7 +242,7 @@ class QualtricsAPI:
           print('Failed to add {} to mailing list\n'.format(row['email']))
     return()
 
-  def list_links_for_distribution(self, distribution_id, survey_id, verbose=True):
+  def list_links_for_distribution(self, distribution_id, survey_id, verbose=False):
     headers = {"X-API-TOKEN": self.config.api_token}
     url = 'https://{0}.qualtrics.com/API/v3/distributions/{1}/links?surveyId={2}'.format(self.config.data_center, 
                                                                                          distribution_id,
@@ -255,7 +270,7 @@ class QualtricsAPI:
 
   def get_links_for_mailing_list(self, survey_id: str, mailing_list_id: str, days_to_expiry=130,
                                  description="Survey distribution", link_type='Individual',
-                                 verbose=True):
+                                 verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/distributions".format(self.config.data_center)
     headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
     expire_date = datetime.now() + timedelta(days=days_to_expiry)
@@ -279,7 +294,7 @@ class QualtricsAPI:
     return(self.list_links_for_distribution(distribution_id, survey_id, verbose))
 
   def create_library_message(self, description, messages: dict, category='invite',
-                             owner=None, verbose=True):
+                             owner=None, verbose=False):
     """Create a message to be stored in owner's library. Parameter 'messages' is
     a mapping from language code (e.g. 'en') to a message string. Category is one
     of: invite, inactiveSurvey, reminder, thankYou, endOfSurvey, general, validation, 
@@ -316,7 +331,7 @@ class QualtricsAPI:
                   link_type='Individual',
                   send_time=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                   expiration_time=(datetime.utcnow() + timedelta(days=130)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                  verbose=True):
+                  verbose=False):
     headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
     base_url = """https://{}.qualtrics.com/API/v3/distributions""".format(self.config.data_center)
 
@@ -349,7 +364,7 @@ class QualtricsAPI:
                     message_library_id=None,
                     reply_to_email=None,
                     send_time=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    verbose=True):
+                    verbose=False):
     headers = {"CONTENT-TYPE": "application/json", "X-API-TOKEN": self.config.api_token}
     base_url = """https://{}.qualtrics.com/API/v3/distributions/{}/reminders""".format(self.config.data_center,
                                                                                        parent_distribution_id)
@@ -381,7 +396,7 @@ class QualtricsAPI:
                   division_id=None,
                   account_expiration_date=None,
                   language='en',
-                  verbose=True):
+                  verbose=False):
     base_url = """https://{}.qualtrics.com/API/v3/users""".format(
       self.config.data_center)
     headers = {
@@ -410,7 +425,7 @@ class QualtricsAPI:
     else:
       return()
 
-  def list_users(self, verbose=True):
+  def list_users(self, verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/users".format(self.config.data_center)
     headers = {"x-api-token": self.config.api_token}
     all_success = True
@@ -432,7 +447,7 @@ class QualtricsAPI:
         print(response.json())
       return()
 
-  def get_user(self, user_id, verbose=True):
+  def get_user(self, user_id, verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/users/{1}".format(self.config.data_center,
                                                                   user_id)
     headers = {"x-api-token": self.config.api_token}
@@ -459,7 +474,7 @@ class QualtricsAPI:
                   time_zone=None,
                   permissions=None,
                   account_expiration_date=None,
-                  verbose=True):
+                  verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/users/{1}".format(self.config.data_center,
                                                                   user_id)
     headers = {"x-api-token": self.config.api_token}
@@ -511,7 +526,7 @@ class QualtricsAPI:
                              embedded_data_ids=None,
                              survey_metadata_ids=None,
                              compress=None,
-                             verbose=True):
+                             verbose=False):
     base_url = 'https://{}.qualtrics.com/API/v3/surveys/{}/export-responses'.format(self.config.data_center,
                                                                                     survey_id)
     headers = {"x-api-token": self.config.api_token}
@@ -545,7 +560,7 @@ class QualtricsAPI:
         print('Response export not created')
       return()
 
-  def get_response_export_progress(self, survey_id, export_progress_id, verbose=True):
+  def get_response_export_progress(self, survey_id, export_progress_id, verbose=False):
     base_url = 'https://{}.qualtrics.com/API/v3/surveys/{}/export-responses/{}'.format(self.config.data_center,
                                                                                        survey_id,
                                                                                        export_progress_id)
@@ -566,7 +581,7 @@ class QualtricsAPI:
         print('Failed to retrieve export progress')
       return()  
 
-  def get_response_export_file_as_dataframe(self, survey_id, file_id, verbose=True):
+  def get_response_export_file_as_dataframe(self, survey_id, file_id, verbose=False):
     base_url = 'https://{}.qualtrics.com/API/v3/surveys/{}/export-responses/{}/file'.format(self.config.data_center,
                                                                                        survey_id,
                                                                                        file_id)
