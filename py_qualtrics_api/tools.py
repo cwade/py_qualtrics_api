@@ -182,6 +182,21 @@ class QualtricsAPI:
     else:
       return()
 
+  def get_mailing_list(self, ml_id, verbose=False):
+    base_url = "https://{0}.qualtrics.com/API/v3/mailinglists/{1}".format(self.config.data_center,
+                                                                          ml_id)
+    headers = {"x-api-token": self.config.api_token}
+    (success, response) = self.make_get_request(base_url, headers, verbose)
+    if success == True:
+      ml = response.json()["result"]
+      if verbose:
+        print('\nRetrieved mailing list: {}'.format(ml))
+      return(ml)
+    else:
+      if verbose:
+        print(response.json())
+      return()  
+
   def delete_mailing_list(self, list_id, verbose=False):
     base_url = "https://{0}.qualtrics.com/API/v3/mailinglists/{1}".format(self.config.data_center, list_id)
     headers = {"X-API-TOKEN": self.config.api_token}
