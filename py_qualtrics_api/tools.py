@@ -20,7 +20,6 @@ class QualtricsAPI:
       else:
         with open(config_file_or_dict, 'r') as ymlfile:
             cfg = yaml.load(ymlfile, yaml.FullLoader)
-      print(cfg)
       if 'api_token' in cfg:
         self.api_token = cfg['api_token']
       else:
@@ -262,15 +261,18 @@ class QualtricsAPI:
     url = 'https://{0}.qualtrics.com/API/v3/distributions/{1}/links?surveyId={2}'.format(self.config.data_center, 
                                                                                          distribution_id,
                                                                                          survey_id)
-    
     all_success = True
     links = []
     while url is not None:
       (success, response) = self.make_get_request(url, headers, verbose)
-      url = response.json()['result']['nextPage']
-      links += response.json()['result']['elements']
+
       if success == False:
         all_success = False
+        url = None
+      else:
+        url = response.json()['result']['nextPage']
+        links += response.json()['result']['elements']
+
 
     if all_success == True:
       if verbose:
